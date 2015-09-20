@@ -1,6 +1,7 @@
 import urllib2
 import base64
 import json
+from collections import defaultdict
 
 def relevance():
     print "Please input the relevant results to your query in the line below, with space saparated numbers:"
@@ -30,7 +31,7 @@ def relevance():
         except IndexError:
             number[0] = 0
 
-    return relevant
+    return set(relevant)
 
 def runQuery(query):
     query = urllib2.quote("'" + query + "'",':/')
@@ -50,13 +51,36 @@ def runQuery(query):
     results = tree['d']['results']
 
     i = 0
+    fragments = []
+    word_count = defaultdict(set)
     for entry in results:
         i += 1
         print str(i) + ': ' + entry['Title']
         print '\t' + entry['Url']
         print '\t' + entry['Description'] + '\n'
+        text = (entry['Title'] + ' ' + entry['Description']).lower()
+        text = text.replace(", ", " _MARKS_ ")
+        text = text.replace(". ", " _MARKS_ ")
+        text = text.replace("! ", " _MARKS_ ")
+        text = text.replace("? ", " _MARKS_ ")
+        text = text.replace(") ", " _MARKS_ ")
+        text = text.replace(" (", " _MARKS_ ")
+        text_split = text.split(' ')
+        for word in text_split:
+            word_count[word].add(i)
+        fragments.append(text_split)
 
     relevant = relevance()
+
+    test = []
+    for word in word_count.keys():
+        pos = len(word_count[word].intersection(relevant))
+        neg = len(word_count[word].difference(relevant))
+        result = pos - neg
+        test.append((word, pos, neg, result))
+
+    sorted_test = sorted(test, key=lambda word: word[3], reverse=True)[:10]
+    print sorted_test
 
 
 query = raw_input('Please input the desired query: ')
