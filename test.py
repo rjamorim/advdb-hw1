@@ -60,15 +60,14 @@ def runQuery(query):
         print '\t' + entry['Url']
         print '\t' + entry['Description'] + '\n'
         text = (entry['Title'] + ' ' + entry['Description']).lower()
-        text = text.replace(", ", " _MARKS_ ")
-        text = text.replace(". ", " _MARKS_ ")
-        text = text.replace("... ", " _MARKS_ ")
-        text = text.replace("...", " _MARKS_ ")
-        text = text.replace(" - ", " _MARKS_ ")
-        text = text.replace("! ", " _MARKS_ ")
-        text = text.replace("? ", " _MARKS_ ")
-        text = text.replace(") ", " _MARKS_ ")
-        text = text.replace(" (", " _MARKS_ ")
+        # Here we ignore punctuation marks
+        for ch in [", ", ". ", "... ", "...", " - ", "! ", "? ", ") ", " (", "&"]:
+            if ch in text:
+                text = text.replace(ch, " _IGNORE_ ")
+        # Here we ignore common, irrelevant words
+        #for ch in ["and", "or", "of", "is", "are", "from", "the", "but", "i", "a", "an"]:
+        #    if ch in text:
+        #        text = text.replace(ch, " _IGNORE_ ")
         text_split = text.split(' ')
         for word in text_split:
             if word not in query_list:
@@ -90,5 +89,5 @@ def runQuery(query):
     return fragments, sorted_test
 
 
-query = raw_input('Please input the desired query: ')
+query = raw_input('Please input the desired query: ').lower()
 runQuery(query)
