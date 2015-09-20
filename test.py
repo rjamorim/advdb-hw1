@@ -34,6 +34,7 @@ def relevance():
     return set(relevant)
 
 def runQuery(query):
+    query_list = query.split(' ')
     query_url = urllib2.quote("'" + query + "'",':/')
     bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json' #&format=Atom'
     #bingUrl = 'https://api.datamarket.azure.com/Bing/Search/v1/Web?Query=%27gates%27&Options=%27EnableHighlighting%27&WebSearchOptions=%27DisableQueryAlterations%27&Market=%27ar-XA%27&Adult=%27Off%27&Latitude=0&Longitude=10&WebFileType=%27HTML%27'
@@ -61,13 +62,17 @@ def runQuery(query):
         text = (entry['Title'] + ' ' + entry['Description']).lower()
         text = text.replace(", ", " _MARKS_ ")
         text = text.replace(". ", " _MARKS_ ")
+        text = text.replace("... ", " _MARKS_ ")
+        text = text.replace("...", " _MARKS_ ")
+        text = text.replace(" - ", " _MARKS_ ")
         text = text.replace("! ", " _MARKS_ ")
         text = text.replace("? ", " _MARKS_ ")
         text = text.replace(") ", " _MARKS_ ")
         text = text.replace(" (", " _MARKS_ ")
         text_split = text.split(' ')
         for word in text_split:
-            word_count[word].add(i)
+            if word not in query_list:
+                word_count[word].add(i)
         fragments.append(text_split)
 
     relevant = relevance()
