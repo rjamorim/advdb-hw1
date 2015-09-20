@@ -34,8 +34,8 @@ def relevance():
     return set(relevant)
 
 def runQuery(query):
-    query = urllib2.quote("'" + query + "'",':/')
-    bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query + '&$top=10&$format=json' #&format=Atom'
+    query_url = urllib2.quote("'" + query + "'",':/')
+    bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json' #&format=Atom'
     #bingUrl = 'https://api.datamarket.azure.com/Bing/Search/v1/Web?Query=%27gates%27&Options=%27EnableHighlighting%27&WebSearchOptions=%27DisableQueryAlterations%27&Market=%27ar-XA%27&Adult=%27Off%27&Latitude=0&Longitude=10&WebFileType=%27HTML%27'
     #Provide your account key here
     accountKey = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
@@ -81,6 +81,8 @@ def runQuery(query):
 
     sorted_test = sorted(test, key=lambda word: word[3], reverse=True)[:10]
     print sorted_test
+
+    return fragments, sorted_test
 
 
 query = raw_input('Please input the desired query: ')
