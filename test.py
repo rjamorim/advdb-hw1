@@ -12,7 +12,6 @@ def relevance():
     i = 0
     number = relevantstr.split(' ', 1)
     while number[0]:
-        i += 1
         if not number[0].isdigit():
             try:
                 number = number[1].split(' ', 1)
@@ -26,16 +25,21 @@ def relevance():
                 number[0] = 0
             continue
         relevant.append(int(number[0]))
+        i += 1
         try:
             number = number[1].split(' ', 1)
         except IndexError:
             number[0] = 0
 
+    if i == 0:
+        print "We are sorry you could not find relevant results for your query. Please try using more descriptive words"
+        exit(0)
+
     return set(relevant)
 
 def runQuery(query):
     query_list = query.split(' ')
-    query_url = urllib2.quote("'" + query + "'",':/')
+    query_url = urllib2.quote("'" + query + "'")
     bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json' #&format=Atom'
     #bingUrl = 'https://api.datamarket.azure.com/Bing/Search/v1/Web?Query=%27gates%27&Options=%27EnableHighlighting%27&WebSearchOptions=%27DisableQueryAlterations%27&Market=%27ar-XA%27&Adult=%27Off%27&Latitude=0&Longitude=10&WebFileType=%27HTML%27'
     #Provide your account key here
