@@ -65,7 +65,7 @@ def runQuery(query):
         print '\t' + entry['Description'] + '\n'
         text = (entry['Title'] + ' ' + entry['Description']).lower()
         # Here we ignore punctuation marks
-        for ch in [", ", ". ", "... ", "...", " - ", "! ", "? ", ") ", " (", "&"]:
+        for ch in [", ", ". ", "... ", "...", " - ", "! ", "? ", ") ", " (", "&", "/"]:
             if ch in text:
                 text = text.replace(ch, " _IGNORE_ ")
         # Here we ignore common, irrelevant words
@@ -74,17 +74,18 @@ def runQuery(query):
         #        text = text.replace(ch, " _IGNORE_ ")
         text_split = text.split(' ')
         for word in text_split:
-            if word not in query_list:
+            if word not in query_list: # and word != '':
                 word_count[word].add(i)
         fragments.append(text_split)
 
     relevant = relevance()
+    n_relevant = len(relevant)
 
     test = []
     for word in word_count.keys():
         pos = len(word_count[word].intersection(relevant))
         neg = len(word_count[word].difference(relevant))
-        result = pos - neg
+        result = (float(pos) / n_relevant) * ((10. - n_relevant - neg) / (10. - n_relevant))
         test.append((word, pos, neg, result))
 
     sorted_test = sorted(test, key=lambda word: word[3], reverse=True)[:10]
