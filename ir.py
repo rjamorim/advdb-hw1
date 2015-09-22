@@ -1,66 +1,24 @@
+# Information Retrieval System
+# Advanced Database Systems
+# Pedro Ferro Freitas - pff2108
+# Roberto Jose de Amorim - rja2139
+
 import urllib2
 import base64
 import json
-from sys import maxsize
+import word
 from collections import defaultdict
 from operator import itemgetter, attrgetter, methodcaller
+from sys import maxsize
 
-
-def run_query(query):
-    # Execute query
-    query_url = urllib2.quote("'" + query + "'")
-    bing_url = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json'
-    # Provide your account key here
-    account_key = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
-
-    account_key_enc = base64.b64encode(account_key + ':' + account_key)
-    headers = {'Authorization': 'Basic ' + account_key_enc}
-    req = urllib2.Request(bing_url, headers=headers)
-    response = urllib2.urlopen(req)
-    content = response.read()
-    # content contains the xml/json response from Bing.
-    # print content
-    tree = json.loads(content)
-    return tree['d']['results']
-
-
-def process_text(text):
-    # Here we ignore punctuation marks
-    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/"]:
-        if ch in text:
-            text = text.replace(ch, " _IGNORE_ ")
-    # Here we ignore common, irrelevant words
-    # for ch in ["and", "or", "of", "is", "are", "from", "the", "but", "i", "a", "an"]:
-    #    if ch in text:
-    #        text = text.replace(ch, " _IGNORE_ ")
-    return text
-
-
-class Word(object):
-    # Words...
-
-    def __init__(self):
-        self.word = ''
-        self.mapping = set()
-        self.pos = self.neg = self.score = 0
-
-    def __repr__(self):
-        return self.word.encode('ascii', 'ignore') + ' ' + str(self.pos) + ' ' + str(self.neg) + ' ' + str(self.score)
-
-    def set_score(self, pos, neg, score):
-        self.pos = pos
-        self.neg = neg
-        self.score = score
-
-
-class IRSystem(object):
+class irsystem(object):
     # Information Retrieval System
 
     def __init__(self):
         self.query_list = []
         self.results = []
         self.results_split = []
-        self.all_words = defaultdict(Word)
+        self.all_words = defaultdict(word)
         self.word_count = defaultdict(set)
         self.relevant = []
         self.n_relevant = 0
@@ -70,7 +28,7 @@ class IRSystem(object):
         self.query_list = query.split(' ')
         self.results = run_query(query)
         self.results_split = []
-        self.all_words = defaultdict(Word)
+        self.all_words = defaultdict(word)
         self.word_count = defaultdict(set)
         self.relevant = []
         self.n_relevant = 0
@@ -150,6 +108,35 @@ class IRSystem(object):
         # print location_att[(sorted_test[0][0], query_list[0], 'dist')]
         # print location_att[(sorted_test[0][0], query_list[0], 'rel_pos')]
 
+def run_query(query):
+    # Execute query
+    query_url = urllib2.quote("'" + query + "'")
+    bing_url = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json'
+    # Provide your account key here
+    account_key = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
+
+    account_key_enc = base64.b64encode(account_key + ':' + account_key)
+    headers = {'Authorization': 'Basic ' + account_key_enc}
+    req = urllib2.Request(bing_url, headers=headers)
+    response = urllib2.urlopen(req)
+    content = response.read()
+    # content contains the xml/json response from Bing.
+    # print content
+    tree = json.loads(content)
+    return tree['d']['results']
+
+
+def process_text(text):
+    # Here we ignore punctuation marks
+    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/"]:
+        if ch in text:
+            text = text.replace(ch, " _IGNORE_ ")
+    # Here we ignore common, irrelevant words
+    # for ch in ["and", "or", "of", "is", "are", "from", "the", "but", "i", "a", "an"]:
+    #    if ch in text:
+    #        text = text.replace(ch, " _IGNORE_ ")
+    return text
+
 
 def get_distance(fragments, relevant, test_list, query_list):
     # get_distance
@@ -208,7 +195,7 @@ def get_distance(fragments, relevant, test_list, query_list):
     return location_att
 
 
-irs = IRSystem()
+irs = irsystem()
 
 current_query = raw_input('Please input the desired query: ').lower()
 irs.get_query_results(current_query)
