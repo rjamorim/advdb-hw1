@@ -39,9 +39,9 @@ class IRSystem(object):
         for entry in self.results:
             # Print the top10 results of the query
             i += 1
-            print str(i) + ': ' + entry['Title']
-            print '\t' + entry['Url']
-            print '\t' + entry['Description'] + '\n'
+            print '\t' + str(i) + ': ' + entry['Title']
+            print '\t\t' + entry['Url']
+            print '\t\t' + entry['Description'] + '\n'
             # Concatenate title and description for cleaning and processing
             text = (entry['Title'] + ' - ' + entry['Description']).lower()
             text = process_text(text)
@@ -61,8 +61,7 @@ class IRSystem(object):
         print "Please input the relevant results to your query in the line below, with space separated numbers:"
         relevantstr = raw_input('> ')
         relevantstr = relevantstr.strip()
-        print relevantstr
-        self.relevant = []
+        self.relevant = set()
         i = 0
         number = relevantstr.split(' ', 1)
         while number[0]:
@@ -80,12 +79,14 @@ class IRSystem(object):
                 except IndexError:
                     number[0] = 0
                 continue
-            self.relevant.append(int(number[0]))
+            self.relevant.add(int(number[0]))
             i += 1
             try:
                 number = number[1].split(' ', 1)
             except IndexError:
                 number[0] = 0
+
+        print 'Relevant entries:', sorted(list(self.relevant)), '\n'
         self.n_relevant = len(self.relevant)
 
         if i == 0:
@@ -103,7 +104,7 @@ class IRSystem(object):
             self.all_words[word].set_score(pos, neg, score)
 
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
-        print self.top_words
+        #print self.top_words
 
         self.query_list.append(self.top_words[0].word)
         return " ".join(self.query_list)
@@ -144,7 +145,7 @@ def process_text(text):
 
 
 def get_distance(fragments, relevant, test_list, query_list):
-    # get_distance
+    #
 
     location_att = defaultdict(float)
     word_count = defaultdict(int)
@@ -200,18 +201,21 @@ def get_distance(fragments, relevant, test_list, query_list):
     return location_att
 
 
+# Instantiates the IRS (Information Retrieval System) class
 irs = IRSystem()
 
 current_query = raw_input('Please input the desired query: ').lower()
+print '\nResults:'
 irs.get_query_results(current_query)
 irs.assign_relevant_results()
 precision = irs.get_precision()
 
 while precision < 0.9:
     current_query = irs.update_query()
-    print current_query, precision
+    print 'Current query:', current_query
+    print 'Results:'
     irs.get_query_results(current_query)
     irs.assign_relevant_results()
     precision = irs.get_precision()
 
-print 'The procedure completed successfully'
+print 'The procedure completed successfully!'
