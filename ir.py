@@ -132,9 +132,9 @@ def process_text(text):
         if ch in text:
             text = text.replace(ch, " _IGNORE_ ")
     # Here we ignore common, irrelevant words
-    # for ch in ["and", "or", "of", "is", "are", "from", "the", "but", "i", "a", "an"]:
-    #    if ch in text:
-    #        text = text.replace(ch, " _IGNORE_ ")
+    for ch in [" and ", " or ", " of ", " is ", " are ", " from ", " the ", " but ", " i ", " a ", " an "]:
+        if ch in text:
+            text = text.replace(ch, " _IGNORE_ ")
     return text
 
 
