@@ -3,7 +3,6 @@
 # Pedro Ferro Freitas - pff2108
 # Roberto Jose de Amorim - rja2139
 
-
 import urllib2
 import base64
 import json
@@ -50,7 +49,7 @@ class IRSystem(object):
             self.results_split.append(text_split)
             # Determine in each text each word appears
             for word in text_split:
-                if word not in self.query_list:  # and word != '': Empty strings appear due to repeated spaces...
+                if word not in self.query_list:
                     self.all_words[word].word = word
                     self.all_words[word].mapping.add(i)
                     self.word_count[word].add(i)
@@ -61,18 +60,20 @@ class IRSystem(object):
     def assign_relevant_results(self):
         print "Please input the relevant results to your query in the line below, with space separated numbers:"
         relevantstr = raw_input('> ')
-        relevantstr = relevantstr.lstrip()
+        relevantstr = relevantstr.strip()
         print relevantstr
         self.relevant = []
         i = 0
         number = relevantstr.split(' ', 1)
         while number[0]:
+            # If the substring is not an integer, it gets ignored
             if not number[0].isdigit():
                 try:
                     number = number[1].split(' ', 1)
                 except IndexError:
                     number[0] = 0
                 continue
+            # If number is out of range, it gets ignored
             if int(number[0]) > 10 or int(number[0]) < 1:
                 try:
                     number = number[1].split(' ', 1)
@@ -93,6 +94,7 @@ class IRSystem(object):
             exit(0)
 
     def update_query(self):
+        # updates the query with the most relevant keyword found in descriptions
         for word in self.all_words.keys():
             temp = self.all_words[word].mapping
             pos = len(temp.intersection(self.relevant))
@@ -207,9 +209,9 @@ precision = irs.get_precision()
 
 while precision < 0.9:
     current_query = irs.update_query()
-    irs.get_query_results(current_query)
     print current_query, precision
+    irs.get_query_results(current_query)
     irs.assign_relevant_results()
     precision = irs.get_precision()
 
-print 'fim!!'
+print 'The procedure completed successfully'

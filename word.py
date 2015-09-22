@@ -15,6 +15,7 @@ class Word(object):
     def __repr__(self):
         return self.word.encode('ascii', 'ignore') + ' ' + str(self.pos) + ' ' + str(self.neg) + ' ' + str(self.score)
 
+    # defines the scores for each words found in description fields
     def set_score(self, pos, neg, score):
         self.pos = pos
         self.neg = neg
