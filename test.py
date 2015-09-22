@@ -96,16 +96,17 @@ def relevance():
 
     return set(relevant)
 
-def runQuery(query):
+
+def run_query(query):
     query_list = query.split(' ')
     query_url = urllib2.quote("'" + query + "'")
-    bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json'
+    bing_url = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json'
     # Provide your account key here
-    accountKey = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
+    account_key = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
 
-    accountKeyEnc = base64.b64encode(accountKey + ':' + accountKey)
-    headers = {'Authorization': 'Basic ' + accountKeyEnc}
-    req = urllib2.Request(bingUrl, headers = headers)
+    account_key_enc = base64.b64encode(account_key + ':' + account_key)
+    headers = {'Authorization': 'Basic ' + account_key_enc}
+    req = urllib2.Request(bing_url, headers=headers)
     response = urllib2.urlopen(req)
     content = response.read()
     # content contains the xml/json response from Bing.
@@ -132,7 +133,7 @@ def runQuery(query):
         #        text = text.replace(ch, " _IGNORE_ ")
         text_split = text.split(' ')
         for word in text_split:
-            if word not in query_list: # and word != '':
+            if word not in query_list:  # and word != '': Empty strings appear due to repeated spaces...
                 word_count[word].add(i)
         fragments.append(text_split)
 
@@ -156,5 +157,5 @@ def runQuery(query):
     return fragments, sorted_test
 
 
-query = raw_input('Please input the desired query: ').lower()
-runQuery(query)
+initial_query = raw_input('Please input the desired query: ').lower()
+run_query(initial_query)
