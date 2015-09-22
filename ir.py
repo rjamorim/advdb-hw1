@@ -6,19 +6,20 @@
 import urllib2
 import base64
 import json
-import word
+from word import Word
 from collections import defaultdict
-from operator import itemgetter, attrgetter, methodcaller
+from operator import attrgetter  # itemgetter, methodcaller
 from sys import maxsize
 
-class irsystem(object):
+
+class IRSystem(object):
     # Information Retrieval System
 
     def __init__(self):
         self.query_list = []
         self.results = []
         self.results_split = []
-        self.all_words = defaultdict(word)
+        self.all_words = defaultdict(Word)
         self.word_count = defaultdict(set)
         self.relevant = []
         self.n_relevant = 0
@@ -28,7 +29,7 @@ class irsystem(object):
         self.query_list = query.split(' ')
         self.results = run_query(query)
         self.results_split = []
-        self.all_words = defaultdict(word)
+        self.all_words = defaultdict(Word)
         self.word_count = defaultdict(set)
         self.relevant = []
         self.n_relevant = 0
@@ -107,6 +108,7 @@ class irsystem(object):
         # location_att = get_distance(fragments, relevant, sorted_test[0], query_list)
         # print location_att[(sorted_test[0][0], query_list[0], 'dist')]
         # print location_att[(sorted_test[0][0], query_list[0], 'rel_pos')]
+
 
 def run_query(query):
     # Execute query
@@ -195,7 +197,7 @@ def get_distance(fragments, relevant, test_list, query_list):
     return location_att
 
 
-irs = irsystem()
+irs = IRSystem()
 
 current_query = raw_input('Please input the desired query: ').lower()
 irs.get_query_results(current_query)

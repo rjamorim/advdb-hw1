@@ -3,7 +3,7 @@
 # Pedro Ferro Freitas - pff2108
 # Roberto Jose de Amorim - rja2139
 
-class word(object):
+class Word(object):
     # words...
 
     def __init__(self):
