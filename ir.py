@@ -131,7 +131,7 @@ def run_query(query):
 
 def process_text(text):
     # Here we ignore punctuation marks
-    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/"]:
+    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/", ' "', '" ']:
         if ch in text:
             text = text.replace(ch, " _IGNORE_ ")
     # Here we ignore common, irrelevant words
@@ -210,5 +210,6 @@ while precision < 0.9:
     irs.get_query_results(current_query)
     irs.assign_relevant_results()
     precision = irs.get_precision()
+    print current_query, precision
 
 print 'fim!!'
