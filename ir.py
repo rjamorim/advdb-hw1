@@ -208,8 +208,8 @@ precision = irs.get_precision()
 while precision < 0.9:
     current_query = irs.update_query()
     irs.get_query_results(current_query)
+    print current_query, precision
     irs.assign_relevant_results()
     precision = irs.get_precision()
-    print current_query, precision
 
 print 'fim!!'
