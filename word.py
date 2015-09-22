@@ -3,6 +3,7 @@
 # Pedro Ferro Freitas - pff2108
 # Roberto Jose de Amorim - rja2139
 
+
 class Word(object):
     # words...
 
