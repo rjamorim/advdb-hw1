@@ -6,6 +6,7 @@
 import urllib2
 import base64
 import json
+import math
 from word import Word
 from collections import defaultdict
 from operator import attrgetter  # itemgetter, methodcaller
@@ -107,6 +108,14 @@ class IRSystem(object):
         print self.top_words
 
         self.get_distance(self.top_words)
+        # updates the query with the most relevant keyword found in descriptions
+        for word in self.all_words.keys():
+            score = self.all_words[word].score
+            score *= math.exp(-(self.all_words[word].avg_dist - 1) / 2)
+            self.all_words[word].update_score(score)
+        self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
+        print self.top_words
+
         self.query_list.append(self.top_words[0].word)
         return " ".join(self.query_list)
 
@@ -166,9 +175,20 @@ class IRSystem(object):
                     word_location[word] = list_location
                     print word, word_location[word]
 
-        for entry in location_att.keys():
-            location_att[entry] /= word_count[entry[0]]
-            print entry, location_att[entry]
+        for entry in test_list:
+            word = entry.word
+            for word2 in self.query_list:
+                location_att[(word, word2, 'dist')] /= word_count[word]
+                location_att[(word, word2, 'rel_pos')] /= word_count[word]
+                print word, word2, location_att[(word, word2, 'dist')], location_att[(word, word2, 'rel_pos')]
+                if location_att[(word, word2, 'dist')] < self.all_words[word].avg_dist:
+                    self.all_words[word].avg_dist = location_att[(word, word2, 'dist')]
+                    self.all_words[word].rel_pos = location_att[(word, word2, 'rel_pos')]
+
+        # for entry in location_att.keys():
+        #    location_att[(word, word2, 'rel_pos')]
+        #    location_att[entry] /= word_count[entry[0]]
+        #    print entry, location_att[entry]
 
         #return location_att
 
