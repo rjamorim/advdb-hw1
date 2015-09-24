@@ -25,6 +25,7 @@ class IRSystem(object):
         self.relevant = []
         self.n_relevant = 0
         self.top_words = []
+        self.stopwords = defaultdict(int)
 
     def get_query_results(self, query):
         self.query_list = query.split(' ')
@@ -35,6 +36,7 @@ class IRSystem(object):
         self.relevant = []
         self.n_relevant = 0
         self.top_words = []
+        self.stopwords = defaultdict(int)
 
         i = 0
         for entry in self.results:
@@ -101,7 +103,7 @@ class IRSystem(object):
             temp = self.all_words[word].mapping
             pos = len(temp.intersection(self.relevant))
             neg = len(temp.difference(self.relevant))
-            score = (float(pos) / self.n_relevant) * ((10. - self.n_relevant - neg) / (10. - self.n_relevant))
+            score = (float(pos) / self.n_relevant) * ((10. - self.n_relevant - neg) / (10. - self.n_relevant)) * (self.stopwords[word] == 0)
             self.all_words[word].set_score(pos, neg, score)
 
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
@@ -115,6 +117,8 @@ class IRSystem(object):
             self.all_words[word].update_score(score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
         print self.top_words
+        for entry in self.top_words:
+            print entry.word, self.stopwords[entry.word]
 
         self.query_list.append(self.top_words[0].word)
         return " ".join(self.query_list)
@@ -122,6 +126,11 @@ class IRSystem(object):
         # location_att = get_distance(fragments, relevant, sorted_test[0], query_list)
         # print location_att[(sorted_test[0][0], query_list[0], 'dist')]
         # print location_att[(sorted_test[0][0], query_list[0], 'rel_pos')]
+
+    def load_stopwords(self):
+        with open("stopwords.txt") as f:
+            for line in f:
+                self.stopwords[line] = 1
 
     def get_distance(self, test_list):
         # parametros anteriores: fragments, relevant, test_list, query_list
@@ -217,10 +226,6 @@ def process_text(text):
     for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/", ' "', '" ', "."]:
         if ch in text:
             text = text.replace(ch, " ")  # _IGNORE_
-    # Here we ignore common, irrelevant words
-    # for ch in [" and ", " or ", " of ", " is ", " are ", " from ", " the ", " but ", " i ", " a ", " an "]:
-    #    if ch in text:
-    #        text = text.replace(ch, " _IGNORE_ ")
     return text
 
 
