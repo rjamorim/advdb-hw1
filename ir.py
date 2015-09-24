@@ -140,6 +140,7 @@ class IRSystem(object):
                 count = text.count(word)
                 list_location = set()
                 location = 0
+                
                 while count > 0:
                     new_location = text[location:].index(word)
                     location += new_location

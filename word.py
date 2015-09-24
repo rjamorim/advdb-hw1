@@ -22,6 +22,7 @@ class Word(object):
     def set_score(self, pos, neg, score):
         self.pos = pos
         self.neg = neg
+
         self.score = score
 
     def get_score (self):
