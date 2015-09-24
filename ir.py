@@ -104,14 +104,73 @@ class IRSystem(object):
             self.all_words[word].set_score(pos, neg, score)
 
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
-        #print self.top_words
+        print self.top_words
 
+        self.get_distance(self.top_words)
         self.query_list.append(self.top_words[0].word)
         return " ".join(self.query_list)
 
         # location_att = get_distance(fragments, relevant, sorted_test[0], query_list)
         # print location_att[(sorted_test[0][0], query_list[0], 'dist')]
         # print location_att[(sorted_test[0][0], query_list[0], 'rel_pos')]
+
+    def get_distance(self, test_list):
+        # parametros anteriores: fragments, relevant, test_list, query_list
+
+        location_att = defaultdict(float)
+        word_count = defaultdict(int)
+
+        for i in self.relevant:
+            # Read the correspondent relevant fragment
+            text = self.results_split[i - 1]
+            print str(i) + ':'
+            print text
+            word_location = defaultdict(set)
+            # Determine position of the words in the query
+            for word in self.query_list:
+                count = text.count(word)
+                list_location = set()
+                location = 0
+                while count > 0:
+                    new_location = text[location:].index(word)
+                    location += new_location
+                    list_location.add(location)
+                    location += 1
+                    count -= 1
+                word_location[word] = list_location
+                print word, word_location[word]
+            # Determine position of the words that could be added to the query
+            for entry in test_list:
+                word = entry.word
+                count0 = count = float(text.count(word))
+                if count0 != 0:
+                    word_count[word] += count
+                    list_location = set()
+                    location = 0
+                    while count > 0:
+                        new_location = text[location:].index(word)
+                        location += new_location
+                        list_location.add(location)
+                        # Calculate distance and relative position to each word in the query
+                        for word2 in self.query_list:
+                            dist = maxsize
+                            rel_pos = 0
+                            for location2 in word_location[word2]:
+                                if abs(location - location2) < dist:
+                                    dist = abs(location - location2)
+                                    rel_pos = (location - location2) / abs(location - location2)
+                            location_att[(word, word2, 'dist')] += dist
+                            location_att[(word, word2, 'rel_pos')] += rel_pos
+                        location += 1
+                        count -= 1
+                    word_location[word] = list_location
+                    print word, word_location[word]
+
+        for entry in location_att.keys():
+            location_att[entry] /= word_count[entry[0]]
+            print entry, location_att[entry]
+
+        #return location_att
 
 
 def run_query(query):
@@ -134,71 +193,14 @@ def run_query(query):
 
 def process_text(text):
     # Here we ignore punctuation marks
-    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/", ' "', '" ']:
+    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/", ' "', '" ', "."]:
         if ch in text:
-            text = text.replace(ch, " _IGNORE_ ")
+            text = text.replace(ch, " ")  # _IGNORE_
     # Here we ignore common, irrelevant words
-    for ch in [" and ", " or ", " of ", " is ", " are ", " from ", " the ", " but ", " i ", " a ", " an "]:
-        if ch in text:
-            text = text.replace(ch, " _IGNORE_ ")
+    # for ch in [" and ", " or ", " of ", " is ", " are ", " from ", " the ", " but ", " i ", " a ", " an "]:
+    #    if ch in text:
+    #        text = text.replace(ch, " _IGNORE_ ")
     return text
-
-
-def get_distance(fragments, relevant, test_list, query_list):
-    #
-
-    location_att = defaultdict(float)
-    word_count = defaultdict(int)
-
-    for i in relevant:
-        # Read the correspondent relevant fragment
-        text = fragments[i - 1]
-        print str(i) + ':'
-        print text
-        word_location = defaultdict(set)
-        # Determine position of the words in the query
-        for word in query_list:
-            count = text.count(word)
-            list_location = set()
-            location = 0
-            while count > 0:
-                new_location = text[location:].index(word)
-                location += new_location
-                list_location.add(location)
-                location += 1
-                count -= 1
-            word_location[word] = list_location
-            print word, word_location[word]
-        # Determine position of the words that could be added to the query
-        for word in test_list:
-            count0 = count = float(text.count(word))
-            if count0 != 0:
-                word_count[word] += count
-                list_location = set()
-                location = 0
-                while count > 0:
-                    new_location = text[location:].index(word)
-                    location += new_location
-                    list_location.add(location)
-                    # Calculate distance and relative position to each word in the query
-                    for word2 in query_list:
-                        dist = maxsize
-                        rel_pos = 0
-                        for location2 in word_location[word2]:
-                            if abs(location - location2) < dist:
-                                dist = abs(location - location2)
-                                rel_pos = (location - location2) / abs(location - location2)
-                        location_att[(word, word2, 'dist')] += dist
-                        location_att[(word, word2, 'rel_pos')] += rel_pos
-                    location += 1
-                    count -= 1
-                word_location[word] = list_location
-                print word, word_location[word]
-
-    for entry in location_att.keys():
-        location_att[entry] /= word_count[entry[0]]
-
-    return location_att
 
 
 # Instantiates the IRS (Information Retrieval System) class

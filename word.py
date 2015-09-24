@@ -11,6 +11,8 @@ class Word(object):
         self.word = ''
         self.mapping = set()
         self.pos = self.neg = self.score = 0
+        self.avg_dist = 0
+        self.rel_pos = 0
 
     def __repr__(self):
         return self.word.encode('ascii', 'ignore') + ' ' + str(self.pos) + ' ' + str(self.neg) + ' ' + str(self.score)
