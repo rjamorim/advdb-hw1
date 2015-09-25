@@ -26,9 +26,13 @@ class IRSystem(object):
         self.n_relevant = 0
         self.top_words = []
         self.stopwords = defaultdict(int)
+        self.load_stopwords()
 
     def get_query_results(self, query):
         self.query_list = query.split(' ')
+        for word in self.query_list:
+            self.stopwords[word] = 1
+
         self.results = run_query(query)
         self.results_split = []
         self.all_words = defaultdict(Word)
@@ -36,7 +40,6 @@ class IRSystem(object):
         self.relevant = []
         self.n_relevant = 0
         self.top_words = []
-        self.stopwords = defaultdict(int)
 
         i = 0
         for entry in self.results:
@@ -47,15 +50,15 @@ class IRSystem(object):
             print '\t\t' + entry['Description'] + '\n'
             # Concatenate title and description for cleaning and processing
             text = (entry['Title'] + ' - ' + entry['Description']).lower()
-            text = process_text(text)
+            text = process_text(text).encode('ascii', 'ignore')
             text_split = text.split(' ')
             self.results_split.append(text_split)
             # Determine in each text each word appears
             for word in text_split:
-                if word not in self.query_list:
-                    self.all_words[word].word = word
-                    self.all_words[word].mapping.add(i)
-                    self.word_count[word].add(i)
+                # if word not in self.query_list:
+                self.all_words[word].word = word
+                self.all_words[word].mapping.add(i)
+                self.word_count[word].add(i)
 
     def get_precision(self):
         return self.n_relevant / 10.
@@ -105,51 +108,49 @@ class IRSystem(object):
             neg = len(temp.difference(self.relevant))
             score = (float(pos) / self.n_relevant) * ((10. - self.n_relevant - neg) / (10. - self.n_relevant)) * (self.stopwords[word] == 0)
             self.all_words[word].set_score(pos, neg, score)
-
-        self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
+        self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:25]
         print self.top_words
 
         self.get_distance(self.top_words)
         # updates the query with the most relevant keyword found in descriptions
         for word in self.all_words.keys():
             score = self.all_words[word].score
-            score *= math.exp(-(self.all_words[word].avg_dist - 1) / 2)
+            score *= 0.75 + 0.25 * math.exp(-(self.all_words[word].avg_dist - 1) / 10)
             self.all_words[word].update_score(score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
         print self.top_words
-        for entry in self.top_words:
-            print entry.word, self.stopwords[entry.word]
 
         self.query_list.append(self.top_words[0].word)
+        count = 0
+        score = 1
+        i = 1
+        while count < 1 and score > 0.9 * self.top_words[0].score:
+            entry = self.top_words[i]
+            score = entry.score
+            if entry.rel_pos == self.top_words[0].rel_pos and entry.position.keys() == self.top_words[0].position.keys():
+                self.query_list.append(entry.word)
+                count += 1
+            i += 1
+
+        for word in self.query_list:
+            print self.all_words[word]
         return " ".join(self.query_list)
 
-        # location_att = get_distance(fragments, relevant, sorted_test[0], query_list)
-        # print location_att[(sorted_test[0][0], query_list[0], 'dist')]
-        # print location_att[(sorted_test[0][0], query_list[0], 'rel_pos')]
-
-    def load_stopwords(self):
-        with open("stopwords.txt") as f:
-            for line in f:
-                self.stopwords[line] = 1
-
     def get_distance(self, test_list):
-        # parametros anteriores: fragments, relevant, test_list, query_list
-
+        # determines the average distance to the words in the query
         location_att = defaultdict(float)
         word_count = defaultdict(int)
 
         for i in self.relevant:
-            # Read the correspondent relevant fragment
+            # Read the correspondent relevant split results (title + description)
             text = self.results_split[i - 1]
-            print str(i) + ':'
-            print text
+            #print str(i) + ': ', text
             word_location = defaultdict(set)
             # Determine position of the words in the query
             for word in self.query_list:
                 count = text.count(word)
                 list_location = set()
                 location = 0
-                
                 while count > 0:
                     new_location = text[location:].index(word)
                     location += new_location
@@ -157,7 +158,9 @@ class IRSystem(object):
                     location += 1
                     count -= 1
                 word_location[word] = list_location
-                print word, word_location[word]
+                self.all_words[word].position[i] = list_location
+                # print word, word_location[word]
+
             # Determine position of the words that could be added to the query
             for entry in test_list:
                 word = entry.word
@@ -177,30 +180,39 @@ class IRSystem(object):
                             for location2 in word_location[word2]:
                                 if abs(location - location2) < dist:
                                     dist = abs(location - location2)
-                                    rel_pos = (location - location2) / abs(location - location2)
+                                    if dist > 0:
+                                        rel_pos = (location - location2) / abs(location - location2)
                             location_att[(word, word2, 'dist')] += dist
                             location_att[(word, word2, 'rel_pos')] += rel_pos
                         location += 1
                         count -= 1
                     word_location[word] = list_location
-                    print word, word_location[word]
+                    self.all_words[word].position[i] = list_location
+                    # print word, self.all_words[word], word_location[word], list_location
 
         for entry in test_list:
             word = entry.word
+            self.all_words[word].avg_dist = 0
             for word2 in self.query_list:
+                # print word, word2, location_att[(word, word2, 'dist')], word_count[word]
                 location_att[(word, word2, 'dist')] /= word_count[word]
                 location_att[(word, word2, 'rel_pos')] /= word_count[word]
-                print word, word2, location_att[(word, word2, 'dist')], location_att[(word, word2, 'rel_pos')]
-                if location_att[(word, word2, 'dist')] < self.all_words[word].avg_dist:
-                    self.all_words[word].avg_dist = location_att[(word, word2, 'dist')]
-                    self.all_words[word].rel_pos = location_att[(word, word2, 'rel_pos')]
+                # print word, word2, location_att[(word, word2, 'dist')], location_att[(word, word2, 'rel_pos')]
+                #if location_att[(word, word2, 'dist')] < self.all_words[word].avg_dist:
+                self.all_words[word].avg_dist += location_att[(word, word2, 'dist')]
+                self.all_words[word].rel_pos += location_att[(word, word2, 'rel_pos')]
+            self.all_words[word].avg_dist /= len(self.query_list)
+            self.all_words[word].rel_pos /= len(self.query_list)
 
-        # for entry in location_att.keys():
-        #    location_att[(word, word2, 'rel_pos')]
-        #    location_att[entry] /= word_count[entry[0]]
-        #    print entry, location_att[entry]
+    def load_stopwords(self):
+        with open("stopwords.txt") as f:
+            for line in f:
+                self.stopwords[line.strip()] = 1
 
-        #return location_att
+    def set_query_order(self):
+        # incomplete
+        for i in self.relevant:
+            a = 1
 
 
 def run_query(query):
@@ -225,8 +237,8 @@ def process_text(text):
     # Here we ignore punctuation marks
     for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/", ' "', '" ', "."]:
         if ch in text:
-            text = text.replace(ch, " ")  # _IGNORE_
-    return text
+            text = text.replace(ch, " _IGNORE_ ")
+    return text.strip()
 
 
 # Instantiates the IRS (Information Retrieval System) class
