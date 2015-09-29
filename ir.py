@@ -51,7 +51,7 @@ class IRSystem(object):
             # Print results for the query
             print '\t' + str(i) + ': ' + entry['Title']
             print '\t\t' + entry['Url']
-            print '\t\t' + entry['Description'] + '\n'
+            print '\t\t' + entry['Description'].encode('utf-8') + '\n'
             # Concatenate title and description for processing
             text = (entry['Title'] + ' - ' + entry['Description']).lower()
             text = process_text(text).encode('ascii', 'ignore')
