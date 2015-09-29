@@ -29,10 +29,14 @@ class IRSystem(object):
         self.load_stopwords()
 
     def get_query_results(self, query):
-        self.query_list = query.split(' ')
-        for word in self.query_list:
-            self.stopwords[word] = 1
+        # Read and process new query
 
+        # 1. Read new query:
+        self.query_list = query.split(' ')
+        for keyword in self.query_list:
+            self.stopwords[keyword] = 1
+
+        # 2. Reinitialize properties for each iteration:
         self.results = run_query(query)
         self.results_split = []
         self.all_words = defaultdict(Word)
@@ -41,35 +45,41 @@ class IRSystem(object):
         self.n_relevant = 0
         self.top_words = []
 
-        i = 0
+        # 3. Get query results:
+        i = 1
         for entry in self.results:
-            # Print the top10 results of the query
-            i += 1
+            # Print results for the query
             print '\t' + str(i) + ': ' + entry['Title']
             print '\t\t' + entry['Url']
             print '\t\t' + entry['Description'] + '\n'
-            # Concatenate title and description for cleaning and processing
+            # Concatenate title and description for processing
             text = (entry['Title'] + ' - ' + entry['Description']).lower()
             text = process_text(text).encode('ascii', 'ignore')
             text_split = text.split(' ')
             self.results_split.append(text_split)
             # Determine in each text each word appears
+            j = 0
             for word in text_split:
-                # if word not in self.query_list:
                 self.all_words[word].word = word
                 self.all_words[word].mapping.add(i)
+                self.all_words[word].position[i].add(j)
                 self.word_count[word].add(i)
+                j += 1
+            i += 1
+
+        #for keyword in self.query_list:
+        #    print self.all_words[keyword]
 
     def get_precision(self):
         return self.n_relevant / 10.
 
     def assign_relevant_results(self):
         print "Please input the relevant results to your query in the line below, with space separated numbers:"
-        relevantstr = raw_input('> ')
-        relevantstr = relevantstr.strip()
+        relevant_str = raw_input('> ')
+        relevant_str = relevant_str.strip()
         self.relevant = set()
         i = 0
-        number = relevantstr.split(' ', 1)
+        number = relevant_str.split(' ', 1)
         while number[0]:
             # If the substring is not an integer, it gets ignored
             if not number[0].isdigit():
@@ -109,7 +119,7 @@ class IRSystem(object):
             score = (float(pos) / self.n_relevant) * ((10. - self.n_relevant - neg) / (10. - self.n_relevant)) * (self.stopwords[word] == 0)
             self.all_words[word].set_score(pos, neg, score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:25]
-        print self.top_words
+        #print self.top_words
 
         self.get_distance(self.top_words)
         # updates the query with the most relevant keyword found in descriptions
@@ -118,7 +128,7 @@ class IRSystem(object):
             score *= 0.75 + 0.25 * math.exp(-(self.all_words[word].avg_dist - 1) / 10)
             self.all_words[word].update_score(score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
-        print self.top_words
+        #print self.top_words
 
         self.query_list.append(self.top_words[0].word)
         count = 0
@@ -132,9 +142,39 @@ class IRSystem(object):
                 count += 1
             i += 1
 
-        for word in self.query_list:
-            print self.all_words[word]
+        self.update_query_order()
         return " ".join(self.query_list)
+
+    def update_query_order(self):
+        # Precisa ser corrigida pra considerar somente o par de palavras mais proximo, mas ja funciona...
+        # Pode ser usada pra melhorar a outra funcao de distancia...
+
+        query_list_old = self.query_list[:]
+        temp = defaultdict(int)
+        query_position = defaultdict(int)
+        for word in query_list_old:
+            position = self.all_words[word].position
+            for word2 in query_list_old:
+                if word2 != word:
+                    position2 = self.all_words[word2].position
+                    for i in self.relevant:
+                        if i in set(position.keys()).intersection(set(position2.keys())):
+                            #print i, word, position[i], word2, position2[i]
+                            for loc in position[i]:
+                                dist = maxsize
+                                rel_pos = 0
+                                for loc2 in position2[i]:
+                                    if abs(loc - loc2) < dist:
+                                        dist = abs(loc - loc2)
+                                        rel_pos = (loc - loc2) / abs(loc - loc2)
+                                #print i, word, loc, word, dist, rel_pos
+                                temp[(word, word2, 'dist')] += dist
+                                temp[(word, word2, 'rel_pos')] += rel_pos
+                                temp[(word, word2, 'count')] += 1
+                    #print word, word2, temp[(word, word2, 'rel_pos')]
+                    query_position[word] += temp[(word, word2, 'rel_pos')] >= 0
+            #print word, query_position[word]
+            self.query_list[query_position[word]] = word
 
     def get_distance(self, test_list):
         # determines the average distance to the words in the query
@@ -208,11 +248,6 @@ class IRSystem(object):
         with open("stopwords.txt") as f:
             for line in f:
                 self.stopwords[line.strip()] = 1
-
-    def set_query_order(self):
-        # incomplete
-        for i in self.relevant:
-            a = 1
 
 
 def run_query(query):
