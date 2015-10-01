@@ -116,6 +116,7 @@ class IRSystem(object):
             score = (float(pos) / self.n_relevant) * ((10. - self.n_relevant - neg) / (10. - self.n_relevant)) * (self.stopwords[word] == 0)
             self.all_words[word].set_score(pos, neg, score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:25]
+        print self.top_words
 
         self.get_distance(self.top_words)
         # updates the query with the most relevant keyword found in descriptions
@@ -124,12 +125,13 @@ class IRSystem(object):
             score *= 0.75 + 0.25 * math.exp(-(self.all_words[word].avg_dist - 1) / 10)
             self.all_words[word].update_score(score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
+        print self.top_words
 
         self.query_list.append(self.top_words[0].word)
         count = 0
         score = 1
         i = 1
-        while count < 1 and score > 0.9 * self.top_words[0].score:
+        while count < 1 and score >= 0.70 * self.top_words[0].score:
             entry = self.top_words[i]
             score = entry.score
             if entry.rel_pos == self.top_words[0].rel_pos and entry.position.keys() == self.top_words[0].position.keys():
@@ -229,9 +231,10 @@ class IRSystem(object):
             word = entry.word
             self.all_words[word].avg_dist = 0
             for word2 in self.query_list:
-                # print word, word2, location_att[(word, word2, 'dist')], word_count[word]
-                location_att[(word, word2, 'dist')] /= word_count[word]
-                location_att[(word, word2, 'rel_pos')] /= word_count[word]
+                if word_count[word] != 0:
+                    # print word, word2, location_att[(word, word2, 'dist')], word_count[word]
+                    location_att[(word, word2, 'dist')] /= word_count[word]
+                    location_att[(word, word2, 'rel_pos')] /= word_count[word]
                 # print word, word2, location_att[(word, word2, 'dist')], location_att[(word, word2, 'rel_pos')]
                 self.all_words[word].avg_dist += location_att[(word, word2, 'dist')]
                 self.all_words[word].rel_pos += location_att[(word, word2, 'rel_pos')]
@@ -265,7 +268,7 @@ def run_query(query):
 
 def process_text(text):
     # Here we ignore punctuation marks
-    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/", ' "', '" ', "."]:
+    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/", ' "', '" ', ".", "'"]:
         if ch in text:
             text = text.replace(ch, " _IGNORE_ ")
     return text.strip()
