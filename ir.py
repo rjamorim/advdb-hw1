@@ -45,7 +45,7 @@ class IRSystem(object):
         self.n_relevant = 0
         self.top_words = []
 
-        # 3. Get query results:
+        # 3. Process query results:
         i = 1
         for entry in self.results:
             # Print results for the query
@@ -71,6 +71,8 @@ class IRSystem(object):
         return self.n_relevant / 10.
 
     def assign_relevant_results(self):
+        #
+
         print "Please input the relevant results to your query in the line below, with space separated numbers:"
         relevant_str = raw_input('> ')
         relevant_str = relevant_str.strip()
@@ -116,7 +118,7 @@ class IRSystem(object):
             score = (float(pos) / self.n_relevant) * ((10. - self.n_relevant - neg) / (10. - self.n_relevant)) * (self.stopwords[word] == 0)
             self.all_words[word].set_score(pos, neg, score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:25]
-        print self.top_words
+        # print self.top_words
 
         self.get_distance(self.top_words)
         # updates the query with the most relevant keyword found in descriptions
@@ -125,7 +127,7 @@ class IRSystem(object):
             score *= 0.75 + 0.25 * math.exp(-(self.all_words[word].avg_dist - 1) / 10)
             self.all_words[word].update_score(score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
-        print self.top_words
+        # print self.top_words
 
         self.query_list.append(self.top_words[0].word)
         count = 0
@@ -156,7 +158,7 @@ class IRSystem(object):
                     position2 = self.all_words[word2].position
                     for i in self.relevant:
                         if i in set(position.keys()).intersection(set(position2.keys())):
-                            #print i, word, position[i], word2, position2[i]
+                            # print i, word, position[i], word2, position2[i]
                             for loc in position[i]:
                                 dist = maxsize
                                 rel_pos = 0
@@ -164,13 +166,13 @@ class IRSystem(object):
                                     if abs(loc - loc2) < dist:
                                         dist = abs(loc - loc2)
                                         rel_pos = (loc - loc2) / abs(loc - loc2)
-                                #print i, word, loc, word, dist, rel_pos
+                                # print i, word, loc, word, dist, rel_pos
                                 temp[(word, word2, 'dist')] += dist
                                 temp[(word, word2, 'rel_pos')] += rel_pos
                                 temp[(word, word2, 'count')] += 1
-                    #print word, word2, temp[(word, word2, 'rel_pos')]
+                    # print word, word2, temp[(word, word2, 'rel_pos')]
                     query_position[word] += temp[(word, word2, 'rel_pos')] >= 0
-            #print word, query_position[word]
+            # print word, query_position[word]
             self.query_list[query_position[word]] = word
 
     def get_distance(self, test_list):
@@ -268,7 +270,7 @@ def run_query(query):
 
 def process_text(text):
     # Here we ignore punctuation marks
-    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/", ' "', '" ', ".", "'"]:
+    for ch in [", ", ". ", "... ", " ...", " - ", "! ", "? ", ") ", " (", " & ", "/", ': ', ' "', '" ', ".", "'"]:
         if ch in text:
             text = text.replace(ch, " _IGNORE_ ")
     return text.strip()
