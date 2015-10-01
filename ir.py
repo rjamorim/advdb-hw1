@@ -33,6 +33,7 @@ class IRSystem(object):
 
         # 1. Read new query:
         self.query_list = query.split(' ')
+        # The words in the query are considered stopwords so they don't get reused on queries
         for keyword in self.query_list:
             self.stopwords[keyword] = 1
 
@@ -151,9 +152,11 @@ class IRSystem(object):
         query_list_old = self.query_list[:]
         temp = defaultdict(int)
         query_position = defaultdict(int)
+        # We iterate through the words in the query, twice
         for word in query_list_old:
             position = self.all_words[word].position
             for word2 in query_list_old:
+                # If the words are different...
                 if word2 != word:
                     position2 = self.all_words[word2].position
                     for i in self.relevant:
@@ -163,6 +166,7 @@ class IRSystem(object):
                                 dist = maxsize
                                 rel_pos = 0
                                 for loc2 in position2[i]:
+                                    # If the distances are smaller than a threshold, they get updated
                                     if abs(loc - loc2) < dist:
                                         dist = abs(loc - loc2)
                                         rel_pos = (loc - loc2) / abs(loc - loc2)
