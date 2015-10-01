@@ -67,9 +67,6 @@ class IRSystem(object):
                 j += 1
             i += 1
 
-        #for keyword in self.query_list:
-        #    print self.all_words[keyword]
-
     def get_precision(self):
         return self.n_relevant / 10.
 
@@ -119,7 +116,6 @@ class IRSystem(object):
             score = (float(pos) / self.n_relevant) * ((10. - self.n_relevant - neg) / (10. - self.n_relevant)) * (self.stopwords[word] == 0)
             self.all_words[word].set_score(pos, neg, score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:25]
-        #print self.top_words
 
         self.get_distance(self.top_words)
         # updates the query with the most relevant keyword found in descriptions
@@ -128,7 +124,6 @@ class IRSystem(object):
             score *= 0.75 + 0.25 * math.exp(-(self.all_words[word].avg_dist - 1) / 10)
             self.all_words[word].update_score(score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
-        #print self.top_words
 
         self.query_list.append(self.top_words[0].word)
         count = 0
@@ -238,23 +233,24 @@ class IRSystem(object):
                 location_att[(word, word2, 'dist')] /= word_count[word]
                 location_att[(word, word2, 'rel_pos')] /= word_count[word]
                 # print word, word2, location_att[(word, word2, 'dist')], location_att[(word, word2, 'rel_pos')]
-                #if location_att[(word, word2, 'dist')] < self.all_words[word].avg_dist:
                 self.all_words[word].avg_dist += location_att[(word, word2, 'dist')]
                 self.all_words[word].rel_pos += location_att[(word, word2, 'rel_pos')]
             self.all_words[word].avg_dist /= len(self.query_list)
             self.all_words[word].rel_pos /= len(self.query_list)
 
     def load_stopwords(self):
-        with open("stopwords.txt") as f:
-            for line in f:
-                self.stopwords[line.strip()] = 1
+        try:
+            with open("stopwords.txt") as f:
+                for line in f:
+                    self.stopwords[line.strip()] = 1
+        except:
+            print "Stopwords file not located. Stopwords won't be loaded and processed"
 
 
 def run_query(query):
     # Execute query
     query_url = urllib2.quote("'" + query + "'")
     bing_url = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json'
-    # Provide your account key here
     account_key = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
 
     account_key_enc = base64.b64encode(account_key + ':' + account_key)
@@ -263,7 +259,6 @@ def run_query(query):
     response = urllib2.urlopen(req)
     content = response.read()
     # content contains the xml/json response from Bing.
-    # print content
     tree = json.loads(content)
     return tree['d']['results']
 
