@@ -50,9 +50,9 @@ class IRSystem(object):
         i = 1
         for entry in self.results:
             # Print results for the query
-            print '\t' + str(i) + ': ' + entry['Title'].encode('utf-8')
-            print '\t\t' + entry['Url'].encode('utf-8')
-            print '\t\t' + entry['Description'].encode('utf-8') + '\n'
+            print '\t' + str(i) + ':\tURL: ' + entry['Url'].encode('utf-8')
+            print '\t\t' + 'Title: ' + entry['Title'].encode('utf-8')
+            print '\t\t' + 'Summary: ' + entry['Description'].encode('utf-8') + '\n'
             # Concatenate title and description for processing
             text = (entry['Title'] + ' - ' + entry['Description']).lower()
             text = process_text(text).encode('ascii', 'ignore')
@@ -288,12 +288,13 @@ query = argv[3]
 irs = IRSystem()
 
 current_query = query # raw_input('Please input the desired query: ').lower()
+print 'Current query:', current_query
 print '\nResults:'
 irs.get_query_results(current_query)
 irs.assign_relevant_results()
 precision = irs.get_precision()
 
-while precision < prec:
+while precision < float(prec):
     current_query = irs.update_query()
     print 'Current query:', current_query
     print 'Results:'
