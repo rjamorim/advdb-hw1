@@ -7,11 +7,11 @@ import urllib2
 import base64
 import json
 import math
+#import sys
 from word import Word
 from collections import defaultdict
 from operator import attrgetter  # itemgetter, methodcaller
-from sys import maxsize
-
+from sys import maxsize, argv
 
 class IRSystem(object):
     # Information Retrieval System
@@ -260,7 +260,8 @@ def run_query(query):
     # Execute query
     query_url = urllib2.quote("'" + query + "'")
     bing_url = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json'
-    account_key = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
+    #account_key = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
+    account_key = bing
 
     account_key_enc = base64.b64encode(account_key + ':' + account_key)
     headers = {'Authorization': 'Basic ' + account_key_enc}
@@ -279,17 +280,20 @@ def process_text(text):
             text = text.replace(ch, " _IGNORE_ ")
     return text.strip()
 
+bing = argv[1]
+prec = argv[2]
+query = argv[3]
 
 # Instantiates the IRS (Information Retrieval System) class
 irs = IRSystem()
 
-current_query = raw_input('Please input the desired query: ').lower()
+current_query = query # raw_input('Please input the desired query: ').lower()
 print '\nResults:'
 irs.get_query_results(current_query)
 irs.assign_relevant_results()
 precision = irs.get_precision()
 
-while precision < 0.9:
+while precision < prec:
     current_query = irs.update_query()
     print 'Current query:', current_query
     print 'Results:'
