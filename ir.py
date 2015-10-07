@@ -12,6 +12,7 @@ from collections import defaultdict
 from operator import attrgetter
 from sys import maxsize, argv
 
+
 class IRSystem(object):
     # Information Retrieval System
 
@@ -253,7 +254,7 @@ def run_query(query):
     # Execute query
     query_url = urllib2.quote("'" + query + "'")
     bing_url = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=' + query_url + '&$top=10&$format=json'
-    #account_key = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
+    # account_key = 'hTvGEgXTQ8lDLYr8nnHocn7n9GSwF5antgnogEhNDTc'
     account_key = bing
 
     account_key_enc = base64.b64encode(account_key + ':' + account_key)
@@ -275,12 +276,12 @@ def process_text(text):
 
 bing = argv[1]
 prec = argv[2]
-query = argv[3]
+initial_query = argv[3]
 
 # Instantiates the IRS (Information Retrieval System) class
 irs = IRSystem()
 
-current_query = query
+current_query = initial_query
 print 'Current query:', current_query
 print '\nResults:'
 irs.get_query_results(current_query)
