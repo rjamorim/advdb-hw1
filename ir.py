@@ -38,6 +38,11 @@ class IRSystem(object):
 
         # 2. Reinitialize properties for each iteration:
         self.results = run_query(query)
+        if len(self.results) < 10:
+            print "The desired query returned less than 10 results."
+            print "Please try a more general query."
+            exit(0)
+
         self.results_split = []
         self.all_words = defaultdict(Word)
         self.word_count = defaultdict(set)
@@ -71,7 +76,6 @@ class IRSystem(object):
         return self.n_relevant / 10.
 
     def assign_relevant_results(self):
-        #
 
         print "Please input the relevant results to your query in the line below, with space separated numbers:"
         relevant_str = raw_input('> ')
