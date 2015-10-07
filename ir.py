@@ -7,10 +7,9 @@ import urllib2
 import base64
 import json
 import math
-#import sys
 from word import Word
 from collections import defaultdict
-from operator import attrgetter  # itemgetter, methodcaller
+from operator import attrgetter
 from sys import maxsize, argv
 
 class IRSystem(object):
@@ -111,7 +110,7 @@ class IRSystem(object):
             exit(0)
 
     def update_query(self):
-        # updates the query with the most relevant keyword found in descriptions
+        # Updates the query with the most relevant keyword found in descriptions and titles
         for word in self.all_words.keys():
             temp = self.all_words[word].mapping
             pos = len(temp.intersection(self.relevant))
@@ -119,21 +118,21 @@ class IRSystem(object):
             score = (float(pos) / self.n_relevant) * ((10. - self.n_relevant - neg) / (10. - self.n_relevant)) * (self.stopwords[word] == 0)
             self.all_words[word].set_score(pos, neg, score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:25]
-        # print self.top_words
 
+        # Includes distance in score calculation
         self.get_distance(self.top_words)
-        # updates the query with the most relevant keyword found in descriptions
         for word in self.all_words.keys():
             score = self.all_words[word].score
             score *= 0.75 + 0.25 * math.exp(-(self.all_words[word].avg_dist - 1) / 10)
             self.all_words[word].update_score(score)
         self.top_words = sorted(self.all_words.values(), key=attrgetter('score'), reverse=True)[:10]
-        # print self.top_words
 
+        # Always adds the word with the highest score to the query
         self.query_list.append(self.top_words[0].word)
         count = 0
         score = 1
         i = 1
+        # And if another word has a score of at least 70% the highest score, that words gets added too
         while count < 1 and score >= 0.70 * self.top_words[0].score:
             entry = self.top_words[i]
             score = entry.score
@@ -146,9 +145,6 @@ class IRSystem(object):
         return " ".join(self.query_list)
 
     def update_query_order(self):
-        # Precisa ser corrigida pra considerar somente o par de palavras mais proximo, mas ja funciona...
-        # Pode ser usada pra melhorar a outra funcao de distancia...
-
         query_list_old = self.query_list[:]
         temp = defaultdict(int)
         query_position = defaultdict(int)
@@ -159,9 +155,9 @@ class IRSystem(object):
                 # If the words are different...
                 if word2 != word:
                     position2 = self.all_words[word2].position
+                    # ...we recalculate the average distance and the relative position
                     for i in self.relevant:
                         if i in set(position.keys()).intersection(set(position2.keys())):
-                            # print i, word, position[i], word2, position2[i]
                             for loc in position[i]:
                                 dist = maxsize
                                 rel_pos = 0
@@ -170,24 +166,20 @@ class IRSystem(object):
                                     if abs(loc - loc2) < dist:
                                         dist = abs(loc - loc2)
                                         rel_pos = (loc - loc2) / abs(loc - loc2)
-                                # print i, word, loc, word, dist, rel_pos
                                 temp[(word, word2, 'dist')] += dist
                                 temp[(word, word2, 'rel_pos')] += rel_pos
                                 temp[(word, word2, 'count')] += 1
-                    # print word, word2, temp[(word, word2, 'rel_pos')]
                     query_position[word] += temp[(word, word2, 'rel_pos')] >= 0
-            # print word, query_position[word]
             self.query_list[query_position[word]] = word
 
     def get_distance(self, test_list):
-        # determines the average distance to the words in the query
+        # Determines the average distance to the words in the query
         location_att = defaultdict(float)
         word_count = defaultdict(int)
 
         for i in self.relevant:
             # Read the correspondent relevant split results (title + description)
             text = self.results_split[i - 1]
-            #print str(i) + ': ', text
             word_location = defaultdict(set)
             # Determine position of the words in the query
             for word in self.query_list:
@@ -202,7 +194,6 @@ class IRSystem(object):
                     count -= 1
                 word_location[word] = list_location
                 self.all_words[word].position[i] = list_location
-                # print word, word_location[word]
 
             # Determine position of the words that could be added to the query
             for entry in test_list:
@@ -231,23 +222,21 @@ class IRSystem(object):
                         count -= 1
                     word_location[word] = list_location
                     self.all_words[word].position[i] = list_location
-                    # print word, self.all_words[word], word_location[word], list_location
 
         for entry in test_list:
             word = entry.word
             self.all_words[word].avg_dist = 0
             for word2 in self.query_list:
                 if word_count[word] != 0:
-                    # print word, word2, location_att[(word, word2, 'dist')], word_count[word]
                     location_att[(word, word2, 'dist')] /= word_count[word]
                     location_att[(word, word2, 'rel_pos')] /= word_count[word]
-                # print word, word2, location_att[(word, word2, 'dist')], location_att[(word, word2, 'rel_pos')]
                 self.all_words[word].avg_dist += location_att[(word, word2, 'dist')]
                 self.all_words[word].rel_pos += location_att[(word, word2, 'rel_pos')]
             self.all_words[word].avg_dist /= len(self.query_list)
             self.all_words[word].rel_pos /= len(self.query_list)
 
     def load_stopwords(self):
+        # Loads stopwords from external file
         try:
             with open("stopwords.txt") as f:
                 for line in f:
@@ -287,7 +276,7 @@ query = argv[3]
 # Instantiates the IRS (Information Retrieval System) class
 irs = IRSystem()
 
-current_query = query # raw_input('Please input the desired query: ').lower()
+current_query = query
 print 'Current query:', current_query
 print '\nResults:'
 irs.get_query_results(current_query)
